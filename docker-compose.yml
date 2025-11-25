@@ -1,0 +1,45 @@
+services:
+  develop:
+    image: mcr.microsoft.com/devcontainers/base:noble
+    container_name: develop
+    hostname: develop
+    command: ["/bin/bash", "-c", "tail -f /dev/null"]
+
+    volumes:
+      - ./devcontainer.json:/home/vscode/.devcontainer/devcontainer.json
+      - ./workspace:/home/vscode/workspace
+      - shared-fs:/home/vscode/shared     # Shared FileSystem
+    networks:
+      - container-network
+
+  vespa:
+    image: vespaengine/vespa
+    container_name: vespa
+    hostname: vespa
+    ports:
+      - "8080:8080"     # Container API / Query API
+      - "19071:19071"   # Config Server API
+
+    ulimits:    # Memory Lock 을 사용해 Swap 으로 인한 성능 저하 방지
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+
+    volumes:
+      - shared-fs:/opt/vespa/var/shared   # Shared FileSystem
+      - vespa-data:/opt/vespa/var    
+    networks:
+      - container-network
+
+    # healthcheck:
+
+networks:
+  container-network:
+    driver: bridge
+
+volumes:
+  vespa-data:
+  shared-fs:
