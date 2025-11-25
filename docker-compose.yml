@@ -6,9 +6,8 @@ services:
     command: ["/bin/bash", "-c", "tail -f /dev/null"]
 
     volumes:
-      - ./devcontainer.json:/home/vscode/.devcontainer/devcontainer.json
-      - ./workspace:/home/vscode/workspace
-      - shared-fs:/home/vscode/shared     # Shared FileSystem
+      - ./workspace:/home/vscode/workspace  # Source Code Repository
+      - shared-fs:/home/vscode/shared       # Shared FileSystem
     networks:
       - container-network
 
@@ -30,7 +29,7 @@ services:
 
     volumes:
       - shared-fs:/opt/vespa/var/shared   # Shared FileSystem
-      - vespa-data:/opt/vespa/var    
+      - vespa-data:/opt/vespa/var         # Vespa Data
     networks:
       - container-network
 
