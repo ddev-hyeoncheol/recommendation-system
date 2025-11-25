@@ -1,9 +1,0 @@
-{
-    "name": "Recommendation Service Dev",
-    "workspaceFolder": "/home/vscode/workspace",
-    "dockerComposeFile": ["docker-compose.yml"],
-    "service": "develop",
-    "forwardPorts": [8081],
-    "shutdownAction": "none",
-    "remoteUser": "vscode"
-}
