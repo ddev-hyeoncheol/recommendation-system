@@ -1,0 +1,32 @@
+{
+    "name": "Recommendation Service Dev",
+    "workspaceFolder": "/home/vscode/workspace",
+    "dockerComposeFile": ["../docker-compose.yml"],
+    "service": "develop",
+    "remoteUser": "vscode",
+
+    "forwardPorts": [8081, 8080, 19071],
+    "shutdownAction": "none",
+
+    "features": {
+        "ghcr.io/devcontainers/features/python": {
+            "version": "3.12",
+            "installTools": true
+        },
+        "ghcr.io/devcontainers/features/java": {
+            "version": "17",
+            "installTools": true
+        }
+    },
+
+    "postCreateCommand": "pip install numpy pandas scikit-learn pyvespa",
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "vscjava.vscode-java-pack"
+            ]
+        }
+    }
+}
