@@ -3,7 +3,7 @@ services:
     image: mcr.microsoft.com/devcontainers/base:noble
     container_name: develop
     hostname: develop
-    command: ["/bin/bash", "-c", "tail -f /dev/null"]
+    command: ["/bin/bash", "-c", "sudo chown -R vscode:vscode /home/vscode/shared && tail -f /dev/null"]
 
     volumes:
       - ./workspace:/home/vscode/workspace  # Source Code Repository
