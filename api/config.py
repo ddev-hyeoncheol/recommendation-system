@@ -31,9 +31,7 @@ class Settings(BaseSettings):
     # ---------------------------------------------------------
     # FastAPI Metadata
     # ---------------------------------------------------------
-    api_title: str = Field(
-        default="Recommendation Service API", validation_alias="API_TITLE"
-    )
+    api_title: str = Field(default="Recommendation Service API", validation_alias="API_TITLE")
     api_version: str = Field(default="0.1.0", validation_alias="API_VERSION")
     api_description: str = Field(
         default="API for User & Product Recommendation backed by Vespa",
