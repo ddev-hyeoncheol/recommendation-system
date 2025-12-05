@@ -20,9 +20,7 @@ class RecommendationService:
     # ---------------------------------------------------------
     # Fetch Vector
     # ---------------------------------------------------------
-    def _fetch_vector(
-        self, schema: str, id_field: str, doc_id: str, vector_field: str
-    ) -> list:
+    def _fetch_vector(self, schema: str, id_field: str, doc_id: str, vector_field: str) -> list:
         """
         Fetch the vector for a given document ID
 
@@ -49,9 +47,7 @@ class RecommendationService:
 
             hit = res.hits[0]
             if "fields" not in hit:
-                raise HTTPException(
-                    status_code=500, detail="Vespa response missing 'fields'"
-                )
+                raise HTTPException(status_code=500, detail="Vespa response missing 'fields'")
 
             if vector_field not in hit["fields"]:
                 raise HTTPException(
@@ -123,9 +119,7 @@ class RecommendationService:
             list: List of recommended products (pid, name, categories).
         """
         # 1. Fetch User Vector
-        user_vector = self._fetch_vector(
-            schema="user", id_field="uid", doc_id=uid, vector_field="user_vector"
-        )
+        user_vector = self._fetch_vector(schema="user", id_field="uid", doc_id=uid, vector_field="user_vector")
 
         # 2. Search Nearest Products
         raw_results = self._search_nearest(
@@ -158,9 +152,7 @@ class RecommendationService:
             list: List of target users (uid, country, state, zipcode).
         """
         # 1. Fetch Product Vector
-        product_vector = self._fetch_vector(
-            schema="product", id_field="pid", doc_id=pid, vector_field="product_vector"
-        )
+        product_vector = self._fetch_vector(schema="product", id_field="pid", doc_id=pid, vector_field="product_vector")
 
         # 2. Search Nearest Users
         raw_results = self._search_nearest(
