@@ -104,6 +104,7 @@ git checkout v0.1
 `workspace/data/` 디렉토리에 원본 데이터 압축 해제:
 
 ```bash
+mkdir -p workspace/data
 tar -xzf fine-data.tar.gz -C workspace/data/
 ```
 
@@ -207,7 +208,7 @@ docker exec -it develop bash
 
 3. Command Palette (`F1` 또는 `Cmd+Shift+P`) 실행 후:
 
-   - `Dev Containers: Reopen in Container` 선택
+   - `Dev Containers: Rebuild and Reopen in Container` 선택
    - 또는 좌측 하단 `><` 아이콘 클릭 → `Reopen in Container`
 
 4. 컨테이너 빌드 완료 후 자동으로 `/home/vscode/workspace` 디렉토리에 접속됩니다.
