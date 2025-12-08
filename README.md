@@ -180,15 +180,13 @@ docker compose up -d
 docker compose ps
 ```
 
-Vespa Health Check:
+Vespa Config Server Health Check:
 
 ```bash
-# Config Server 상태 확인
 curl http://localhost:19071/state/v1/health
-
-# Container API 상태 확인
-curl http://localhost:8080/state/v1/health
 ```
+
+> **Note**: Container API (8080 포트)는 Application Package 배포 이후에 확인 가능합니다. (4.1 참고)
 
 ### 2.4 develop 컨테이너 접속
 
@@ -272,6 +270,14 @@ Dev Container 접속 후 VS Code에서:
 
 호스트 머신에서:
 
+#### v0.1 이하
+
+```bash
+/bin/bash deploy_vespa.sh
+```
+
+#### v0.2 이상
+
 ```bash
 /bin/bash scripts/deploy_vespa.sh
 ```
@@ -281,20 +287,34 @@ Dev Container 접속 후 VS Code에서:
 1. `create_package.py` 실행하여 Vespa 스키마 생성
 2. Vespa Config Server에 Application Package 배포
 
+배포 완료 후 Container API 상태 확인:
+
+```bash
+curl http://localhost:8080/state/v1/health
+```
+
 ### 4.2 데이터 Feed
+
+> **Note**: 데이터 Feed 전에 반드시 Container API health check가 정상인지 확인하세요.
+
+#### v0.1 이하
+
+```bash
+/bin/bash feed_vespa.sh
+```
+
+이 스크립트는 다음 순서로 데이터를 Feed합니다:
+
+1. `user`
+2. `product`
+
+#### v0.2 이상
 
 ```bash
 /bin/bash scripts/feed_vespa.sh
 ```
 
 이 스크립트는 다음 순서로 데이터를 Feed합니다:
-
-#### v0.1 이하
-
-1. `user`
-2. `product`
-
-#### v0.2 이상
 
 1. `user_data` (Parent) → `user` (Child)
 2. `product_data` (Parent) → `product` (Child)
@@ -361,12 +381,24 @@ curl http://localhost:8081/recommend/product/12345
 
 ```json
 {
-  "uid": "12345",
+  "uid": "1",
   "recommendations": [
     {
-      "pid": "67890",
-      "name": "PRODUCT-A",
-      "categories": ["1", "8", "20"]
+      "pid": "37871",
+      "name": "CENTRAL-12K",
+      "categories": [
+        "3",
+        "449",
+        "334"
+      ]
+    },
+    {
+      "pid": "225807",
+      "name": "Best Minka-41A2",
+      "categories": [
+        "234",
+        "244"
+      ]
     },
     ...
   ]
@@ -391,13 +423,19 @@ curl http://localhost:8081/recommend/user/67890
 
 ```json
 {
-  "pid": "67890",
+  "pid": "1",
   "target_users": [
     {
-      "uid": "12345",
+      "uid": "21239",
       "country": "United States",
-      "state": "CA",
-      "zipcode": "90210"
+      "state": "NY",
+      "zipcode": "11236"
+    },
+    {
+      "uid": "24674",
+      "country": "Mexico",
+      "state": "Mexico",
+      "zipcode": "56536"
     },
     ...
   ]
