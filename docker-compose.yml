@@ -11,6 +11,20 @@ services:
     networks:
       - container-network
 
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api
+    hostname: api
+    ports:
+      - "8081:8081"
+
+    volumes:
+      - ./api:/app/api
+    networks:
+      - container-network
+
   vespa:
     image: vespaengine/vespa
     container_name: vespa
