@@ -1,7 +1,10 @@
 {
     "name": "Recommendation Service Dev",
     "workspaceFolder": "/home/vscode/workspace",
-    "dockerComposeFile": ["../docker-compose.yml"],
+    "dockerComposeFile": [
+        "../docker-compose.yml",
+        "../docker-compose.dev.yml"
+    ],
     "service": "develop",
     "remoteUser": "vscode",
 
