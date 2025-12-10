@@ -209,4 +209,5 @@ pyrightconfig.json
 # End of https://www.toptal.com/developers/gitignore/api/python,macos
 
 data/
+app_package_out/
 project-history.md
