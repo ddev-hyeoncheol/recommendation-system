@@ -1,11 +1,18 @@
 FROM mcr.microsoft.com/devcontainers/base:noble
 
+ENV TZ=Asia/Seoul
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update && \
-    export DEBIAN_FRONTEND=noninteractive && \
     apt-get install -y --no-install-recommends \
     # Essential packages
-    curl
+    curl tzdata
 
+# Set Timezone
+RUN ln -fs /usr/share/zoneinfo/${TZ} /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata
+
+# Resolve Latest Vespa CLI Version & Install
 RUN echo "Resolving latest Vespa CLI version..." &&\
 
     # 1. get latest Vespa CLI version from GitHub releases/latest page (e.g. .../tag/v8.618.24)
@@ -33,4 +40,4 @@ RUN vespa version
 
 USER vscode
 
-RUN vespa config set target http://vespa
+RUN vespa config set target http://vespa:8080
