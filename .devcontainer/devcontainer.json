@@ -17,7 +17,7 @@
         }
     },
 
-    "postCreateCommand": "pip install --upgrade pip && pip install numpy pandas scikit-learn pyvespa jupyter dotenv",
+    "postCreateCommand": "pip install --upgrade pip && pip install numpy pandas scikit-learn matplotlib seaborn pyvespa jupyter dotenv",
 
     "customizations": {
         "vscode": {
