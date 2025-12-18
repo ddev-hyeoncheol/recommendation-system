@@ -1,4 +1,4 @@
-from vespa.package import Schema, Document, Field, ImportedField
+from vespa.package import Schema, Field, ImportedField, Document, DocumentSummary, Summary
 from .common import get_default_rank_profile
 
 
@@ -12,16 +12,20 @@ def create_product_schema() -> Schema:
     - Marked as 'global_document' to be accessible from any node.
 
     Returns:
-        Schema: The product data schema.
+        Schema: The Product Data Schema.
     """
-    schema = Schema(name="product", document=Document(), global_document=True)
-
-    # Add fields for product metadata
-    schema.add_fields(
+    # Document Fields
+    document_fields = [
         Field(name="pid", type="string", indexing=["attribute", "summary"]),
         Field(name="name", type="string", indexing=["attribute", "summary"]),
         Field(name="categories", type="array<string>", indexing=["attribute", "summary"]),
-    )
+    ]
+
+    # Document
+    document = Document(fields=document_fields)
+
+    # Product Schema
+    schema = Schema(name="product", document=document, global_document=True)
 
     return schema
 
@@ -39,12 +43,10 @@ def create_product_vector_schema(vector_dimension: int) -> Schema:
         vector_dimension (int): The dimension of the vector.
 
     Returns:
-        Schema: The product vector schema.
+        Schema: The Product Vector Schema.
     """
-    schema = Schema(name="product_vector", document=Document())
-
-    # Add fields for product vector
-    schema.add_fields(
+    # Document Fields
+    document_fields = [
         Field(name="product_ref", type="reference<product>", indexing=["attribute"]),
         Field(name="model_version", type="string", indexing=["attribute", "summary"]),
         Field(
@@ -54,14 +56,38 @@ def create_product_vector_schema(vector_dimension: int) -> Schema:
             attribute=["distance-metric: angular"],
             index="hnsw",
         ),
+    ]
+
+    # Imported Fields from Product Schema
+    imported_fields = [
+        ImportedField(name="pid", reference_field="product_ref", field_to_import="pid"),
+        ImportedField(name="name", reference_field="product_ref", field_to_import="name"),
+        ImportedField(name="categories", reference_field="product_ref", field_to_import="categories"),
+    ]
+
+    # Document Summary Fields from Product Schema
+    product_summary_fields = [
+        Summary(name="pid", type=None, fields=[("source", "pid")]),
+        Summary(name="name", type=None, fields=[("source", "name")]),
+        Summary(name="categories", type=None, fields=[("source", "categories")]),
+    ]
+
+    # Document
+    document = Document(fields=document_fields)
+
+    # Document Summary
+    document_summary = DocumentSummary(name="product_summary", summary_fields=product_summary_fields)
+
+    # Rank Profile
+    rank_profile = get_default_rank_profile(embedding_field_name="embedding", vector_dimension=vector_dimension)
+
+    # Product Vector Schema
+    schema = Schema(
+        name="product_vector",
+        document=document,
+        imported_fields=imported_fields,
+        document_summaries=[document_summary],
+        rank_profiles=[rank_profile],
     )
-
-    # Add imported fields
-    schema.add_imported_field(ImportedField(name="pid", reference_field="product_ref", field_to_import="pid"))
-    schema.add_imported_field(ImportedField(name="name", reference_field="product_ref", field_to_import="name"))
-    schema.add_imported_field(ImportedField(name="categories", reference_field="product_ref", field_to_import="categories"))
-
-    # Add default rank profile
-    schema.add_rank_profile(get_default_rank_profile(embedding_field_name="embedding", vector_dimension=vector_dimension))
 
     return schema
