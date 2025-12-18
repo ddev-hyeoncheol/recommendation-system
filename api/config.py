@@ -53,6 +53,15 @@ class Settings(BaseSettings):
     )
 
     # ---------------------------------------------------------
+    # Latest Model Version
+    # ---------------------------------------------------------
+    latest_model_version: str = Field(
+        default="v0.2",
+        validation_alias="LATEST_MODEL_VERSION",
+        description="Latest model version available in Vespa",
+    )
+
+    # ---------------------------------------------------------
     # Pydantic Configuration
     # ---------------------------------------------------------
     model_config = SettingsConfigDict(
