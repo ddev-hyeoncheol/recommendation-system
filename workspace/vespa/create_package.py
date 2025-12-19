@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
 from vespa.package import ApplicationPackage
-from definitions.user import create_user_schema, create_user_vector_schema
-from definitions.product import create_product_schema, create_product_vector_schema
+from definitions.user import create_user_schema, create_user_vector_schema, create_user_cold_start_schema
+from definitions.product import create_product_schema, create_product_vector_schema, create_product_cold_start_schema
 
 # ---------------------------------------------------------
 # Configuration & Environment Setup
@@ -65,6 +65,8 @@ def main():
         create_product_schema(),
         create_user_vector_schema(VECTOR_DIMENSION),
         create_product_vector_schema(VECTOR_DIMENSION),
+        create_user_cold_start_schema(),
+        create_product_cold_start_schema(),
     ]
 
     # Create Application Package

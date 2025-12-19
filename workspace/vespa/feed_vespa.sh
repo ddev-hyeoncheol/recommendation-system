@@ -35,8 +35,9 @@ echo -e "\n✅ Vespa Configuration set successfully."
 echo -e "\n[Step 3] Feeding User Data..."
 vespa feed $FEED_DATA_DIR/vespa_user_feed.jsonl
 vespa feed $FEED_DATA_DIR/vespa_user_vector_feed.jsonl
+# vespa feed $FEED_DATA_DIR/vespa_user_cold_start_feed.jsonl
 
-echo -e "\n✅ Fed User & User Vector successfully."
+echo -e "\n✅ Fed User & User Vector & User Cold Start successfully."
 
 # ---------------------------------------------------------
 # 4. Feed Product Data
@@ -44,7 +45,8 @@ echo -e "\n✅ Fed User & User Vector successfully."
 echo -e "\n[Step 4] Feeding Product Data..."
 vespa feed $FEED_DATA_DIR/vespa_product_feed.jsonl
 vespa feed $FEED_DATA_DIR/vespa_product_vector_feed.jsonl
+vespa feed $FEED_DATA_DIR/vespa_product_cold_start_feed.jsonl
 
-echo -e "\n✅ Fed Product & Product Vector successfully."
+echo -e "\n✅ Fed Product & Product Vector & Product Cold Start successfully."
 
 echo -e "\n✅ Data Feeding Pipeline finished successfully!"
