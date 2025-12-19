@@ -1,4 +1,4 @@
-from vespa.package import Schema, Field, ImportedField, Document, DocumentSummary, Summary
+from vespa.package import Schema, Field, ImportedField, Document, DocumentSummary, Summary, HNSW
 from .common import get_default_rank_profile, get_default_cold_start_rank_profile
 
 
@@ -46,17 +46,14 @@ def create_user_vector_schema(vector_dimension: int) -> Schema:
     Returns:
         Schema: The User Vector Schema.
     """
+    # ANN Index Fields
+    hnsw_index = HNSW(distance_metric="angular", max_links_per_node=32, neighbors_to_explore_at_insert=200)
+
     # Document Fields
     document_fields = [
         Field(name="user_ref", type="reference<user>", indexing=["attribute"]),
         Field(name="model_version", type="string", indexing=["attribute", "summary"]),
-        Field(
-            name="embedding",
-            type=f"tensor<float>(x[{vector_dimension}])",
-            indexing=["attribute", "index", "summary"],
-            attribute=["distance-metric: angular"],
-            index="hnsw",
-        ),
+        Field(name="embedding", type=f"tensor<float>(x[{vector_dimension}])", indexing=["attribute", "index", "summary"], ann=hnsw_index),
     ]
 
     # Imported Fields from User Schema

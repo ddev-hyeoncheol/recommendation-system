@@ -44,6 +44,7 @@ def create_validation_overrides() -> str:
     <allow until="{until_date}">content-removal</allow>
     <allow until="{until_date}">index-mode-change</allow>
     <allow until="{until_date}">indexing-change</allow>
+    <allow until="{until_date}">hnsw-settings-change</allow>
 </validation-overrides>
 """
 
