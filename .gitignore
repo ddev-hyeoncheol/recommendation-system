@@ -208,6 +208,18 @@ pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python,macos
 
+### Devcontainer Environment & Tools ###
+.devcontainer/.*
+.ssh/
+.config/
+.dotnet/
+.vscode-server/
+.gitconfig
+.local
+
+.bash_history
+.python_history
+
 data/
 app_package_out/
 project-history.md

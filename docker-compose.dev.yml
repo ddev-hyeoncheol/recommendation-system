@@ -8,7 +8,7 @@ services:
     command: ["/bin/bash", "-c", "tail -f /dev/null"]
 
     volumes:
-      - ./workspace:/home/vscode/workspace  # Source Code Repository
+      - .:/home/vscode                      # Source Code Repository
       - vespa-logs:/opt/vespa/logs:ro       # Vespa Logs
     networks:
       - container-network
