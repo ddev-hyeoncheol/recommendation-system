@@ -217,6 +217,12 @@ pyrightconfig.json
 .gitconfig
 .local
 
+.vespa/
+
+.cursor/
+.cursor-server/
+.zcompdump
+
 .bash_history
 .python_history
 
