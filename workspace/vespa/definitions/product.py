@@ -76,7 +76,7 @@ def create_product_vector_schema(vector_dimension: int) -> Schema:
     document_summary = DocumentSummary(name="product_summary", summary_fields=product_summary_fields)
 
     # Rank Profile
-    rank_profile = get_default_rank_profile(embedding_field_name="embedding", vector_dimension=vector_dimension)
+    default_rank_profile = get_default_rank_profile(embedding_field_name="embedding", vector_dimension=vector_dimension)
 
     # Product Vector Schema
     schema = Schema(
@@ -84,7 +84,7 @@ def create_product_vector_schema(vector_dimension: int) -> Schema:
         document=document,
         imported_fields=imported_fields,
         document_summaries=[document_summary],
-        rank_profiles=[rank_profile],
+        rank_profiles=[default_rank_profile],
     )
 
     return schema

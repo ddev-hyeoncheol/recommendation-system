@@ -21,7 +21,6 @@ def create_user_schema() -> Schema:
         Field(name="state", type="string", indexing=["attribute", "summary"]),
         Field(name="zipcode", type="string", indexing=["attribute", "summary"]),
         Field(name="segment_id", type="string", indexing=["attribute", "summary"]),
-        Field(name="recent_interactions", type="array<string>", indexing=["attribute", "summary"]),
     ]
 
     # Document
@@ -81,7 +80,7 @@ def create_user_vector_schema(vector_dimension: int) -> Schema:
     document_summary = DocumentSummary(name="user_summary", summary_fields=user_summary_fields)
 
     # Rank Profile
-    rank_profile = get_default_rank_profile(embedding_field_name="embedding", vector_dimension=vector_dimension)
+    default_rank_profile = get_default_rank_profile(embedding_field_name="embedding", vector_dimension=vector_dimension)
 
     # User Vector Schema
     schema = Schema(
@@ -89,7 +88,7 @@ def create_user_vector_schema(vector_dimension: int) -> Schema:
         document=document,
         imported_fields=imported_fields,
         document_summaries=[document_summary],
-        rank_profiles=[rank_profile],
+        rank_profiles=[default_rank_profile],
     )
 
     return schema
