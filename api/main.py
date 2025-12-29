@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from .config import settings
 from .routers import health_router, recommendation_router
 from .vespa_client import get_vespa_client
+from .redis_client import get_redis_client
 
 
 # ---------------------------------------------------------
@@ -16,7 +17,7 @@ async def lifespan(app: FastAPI):
     Initializes the Vespa client connection to ensure availability.
     """
     get_vespa_client()
-
+    get_redis_client()
     yield
 
 

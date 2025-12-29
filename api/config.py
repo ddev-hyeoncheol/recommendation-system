@@ -29,6 +29,20 @@ class Settings(BaseSettings):
     )
 
     # ---------------------------------------------------------
+    # Redis Configuration
+    # ---------------------------------------------------------
+    redis_host: str = Field(
+        default="redis",
+        validation_alias="REDIS_HOST",
+        description="Hostname of the Redis container or service",
+    )
+    redis_port: int = Field(
+        default=6379,
+        validation_alias="REDIS_PORT",
+        description="Port number for Redis Connection",
+    )
+
+    # ---------------------------------------------------------
     # FastAPI Metadata
     # ---------------------------------------------------------
     api_title: str = Field(default="Recommendation Service API", validation_alias="API_TITLE")
@@ -50,6 +64,16 @@ class Settings(BaseSettings):
         default=10,
         validation_alias="RECOMMEND_TARGET_HITS",
         description="Number of candidates to search in HNSW graph (Approximate Search Accuracy)",
+    )
+    recommend_alpha: float = Field(
+        default=0.6,
+        validation_alias="RECOMMEND_ALPHA",
+        description="Alpha(Long-Term) weight for hybrid vector computation",
+    )
+    recommend_beta: float = Field(
+        default=0.4,
+        validation_alias="RECOMMEND_BETA",
+        description="Beta(Short-Term) weight for hybrid vector computation",
     )
 
     # ---------------------------------------------------------
