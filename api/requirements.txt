@@ -1,4 +1,6 @@
 pyvespa
+redis
+numpy
 python-dotenv
 fastapi
 uvicorn

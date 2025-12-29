@@ -20,6 +20,18 @@ services:
       retries: 24
       start_period: 120s
 
+  redis:
+    image: redis:latest
+    container_name: redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    
+    volumes:
+      - redis-data:/data
+    networks:
+      - container-network
+
   api:
     build:
       context: ./api
@@ -37,6 +49,8 @@ services:
     depends_on:
       vespa:
         condition: service_healthy
+      redis:
+        condition: service_started
 
 networks:
   container-network:
@@ -45,3 +59,4 @@ networks:
 volumes:
   vespa-data:
   vespa-logs:
+  redis-data:
