@@ -21,11 +21,11 @@ Vespa Engine을 활용하여 벡터 유사도 기반의 추천 API 를 제공합
 +-----------------------------------------------------------------------------------------+
 |                                  Host Machine (Local)                                   |
 |                                                                                         |
-|  +---------------------------------------------------+                                  |
-|  |                    VS Code                        |                                  |
-|  |  +---------------------------------------------+  |                                  |
-|  |  |       Dev Containers (Extension)            |  |                                  |
-|  |  +---------+-----------------------------------+  |                                  |
+|  +---------------------------------------------------+   Port Forwarding                |
+|  |                    VS Code                        |   - 6379:6379   (Redis)          |
+|  |  +---------------------------------------------+  |   - 8081:8081   (FastAPI)        |
+|  |  |       Dev Containers (Extension)            |  |   - 8080:8080   (Vespa Query)    |
+|  |  +---------+-----------------------------------+  |   - 19071:19071 (Vespa Admin)    |
 |  +------------+--------------------------------------+                                  |
 |               | (Connect)                                                               |
 |  +------------|----------------------------------------------------------------------+  |
@@ -37,14 +37,14 @@ Vespa Engine을 활용하여 벡터 유사도 기반의 추천 API 를 제공합
 |  |  |  - Python 3.12    | Feed   |  - Vespa Engine   |        |  - FastAPI        |  |  |      |                   |
 |  |  |  - Jupyter        |        |                  -+--------+> - pyvespa       -+--+--+------+> GET /recommend   |
 |  |  +---------+---------+        +--------+-+--------+  Res   |                   |  |  | Res  |  - /user/{pid}    |
-|  |            | (Read)                    | | (Read / Write)  |                   |  |  |      |  - /product/{uid} |
-|  |  +---------v-----------------------------v------+          |                   |  |  |      |                   |
-|  |  |               vespa-logs (Vol)               |          +-------------------+  |  |      +-------------------+
-|  |  +----------------------------------------------+                                 |  |
-|  |                         (Read / Write) |             Port Forwarding              |  |
-|  |  +-------------------------------------v--------+    - 8081:8081   (FastAPI)      |  |
-|  |  |               vespa-data (Vol)               |    - 8080:8080   (Vespa Query)  |  |
-|  |  +----------------------------------------------+    - 19071:19071 (Vespa Admin)  |  |
+|  |            | (Read)                    | | (Read / Write)  +---------+---------+  |  |      |  - /product/{uid} |
+|  |  +---------v-----------------------------v------+                    | (Read)     |  |      |                   |
+|  |  |               vespa-logs (Vol)               |          +---------v---------+  |  |      +-------------------+
+|  |  +----------------------------------------------+          |       Redis       |  |  |
+|  |                         (Read / Write) |                   |                   |  |  |
+|  |  +-------------------------------------v--------+          |  - Redis Session  |  |  |
+|  |  |               vespa-data (Vol)               |          |                   |  |  |
+|  |  +----------------------------------------------+          +--------+-+--------+  |  |
 |  |                                                                                   |  |
 |  +-----------------------------------------------------------------------------------+  |
 +-----------------------------------------------------------------------------------------+
@@ -63,6 +63,7 @@ recommendation-system/
 │   ├── config.py                     # API 서버 환경 설정
 │   ├── main.py                       # 앱 진입점
 │   ├── vespa_client.py               # API 서버 Vespa 클라이언트
+│   ├── redis_client.py               # Session Redis 클라이언트
 │   ├── Dockerfile                    # API 서버 Container 이미지 정의
 │   ├── requirements.txt              # API 서버 Python 패키지 의존성
 │   ├── routers/                      # API 라우터
@@ -104,7 +105,7 @@ recommendation-system/
 ```bash
 git clone <repository-url>
 cd recommendation-system
-git checkout v0.2
+git checkout v0.3
 ```
 
 ### 2.2 데이터 준비
@@ -166,6 +167,10 @@ touch api/.env
 VESPA_HOST=vespa
 VESPA_PORT=8080
 
+### Redis Configuration
+REDIS_HOST=redis
+REDIS_PORT=6379
+
 ### FastAPI Metadata
 API_TITLE=Recommendation Service API
 API_VERSION=0.1.0
@@ -175,8 +180,11 @@ API_DESCRIPTION=API for User & Product Recommendation backed by Vespa
 RECOMMEND_HITS=5
 RECOMMEND_TARGET_HITS=20
 
+RECOMMEND_ALPHA=0.2
+RECOMMEND_BETA=0.8
+
 ### Latest Model Version
-LATEST_MODEL_VERSION=v0.2
+LATEST_MODEL_VERSION=v0.3
 ```
 
 ### 2.4 Docker 컨테이너 실행
@@ -232,7 +240,7 @@ docker exec -it develop bash
 
 Dev Container 접속 후 VS Code에서:
 
-1. `workspace/notebooks/train_model_v0.2.ipynb` 파일 열기
+1. `workspace/notebooks/train_model_v0.3.ipynb` 파일 열기
 2. 우측 상단 **Select Kernel** 클릭 → Python 3.12 선택
 3. 셀 실행 (`Shift+Enter`)
 
@@ -240,7 +248,7 @@ Dev Container 접속 후 VS Code에서:
 
 ### 3.2 모델 학습
 
-`notebooks/train_model_v0.2.ipynb` 노트북을 순차적으로 실행합니다.
+`notebooks/train_model_v0.3.ipynb` 노트북을 순차적으로 실행합니다.
 
 **주요 단계:**
 
@@ -265,7 +273,7 @@ Dev Container 접속 후 VS Code에서:
 | `vespa_user_feed.jsonl`    | 유저 벡터 |
 | `vespa_product_feed.jsonl` | 상품 벡터 |
 
-#### v0.2 이상
+#### v0.2 이하
 
 | 파일명                          | 설명                     |
 | ------------------------------- | ------------------------ |
@@ -276,6 +284,16 @@ Dev Container 접속 후 VS Code에서:
 | `vespa_user_cold_start_feed.jsonl`        | 유저 Cold Start 데이터 (Child) |
 | `vespa_product_cold_start_feed.jsonl`     | 상품 Cold Start 데이터 (Child) |
 
+#### v0.3 이상
+
+| 파일명                          | 설명                     |
+| ------------------------------- | ------------------------ |
+| `vespa_user_feed.jsonl`    | 유저 메타데이터 (Parent) |
+| `vespa_product_feed.jsonl` | 상품 메타데이터 (Parent) |
+| `vespa_user_vector_feed.jsonl`         | 유저 벡터 (Child)        |
+| `vespa_product_vector_feed.jsonl`      | 상품 벡터 (Child)        |
+| `vespa_user_segment_feed.jsonl`        | 유저 Segment |
+
 ---
 
 ## 4. 스키마 생성 및 Vespa Feed
@@ -285,7 +303,7 @@ Dev Container 접속 후 VS Code에서:
 Develop Container 머신에서:
 
 ```bash
-/bin/bash vespa/deploy_vespa.sh
+/bin/bash workspace/vespa/deploy_vespa.sh
 ```
 
 이 스크립트는 다음을 수행합니다:
@@ -304,13 +322,13 @@ curl http://vespa:8080/state/v1/health
 > **Note**: 데이터 Feed 전에 반드시 Container API health check가 정상인지 확인하세요. Deploy 이후 약 1~2분이 소요됩니다.
 
 ```bash
-/bin/bash vespa/feed_vespa.sh
+/bin/bash workspace/vespa/feed_vespa.sh
 ```
 
 이 스크립트는 다음 순서로 데이터를 Feed합니다:
 
-1. `user_data` (Parent) → `user` (Child) → `user_cold_start` (Child)
-2. `product_data` (Parent) → `product` (Child) → `product_cold_start` (Child)
+1. `user_data` (Parent) → `user` (Child) → `user_segment`
+2. `product_data` (Parent) → `product` (Child)
 
 ### 4.3 데이터 확인
 
@@ -344,7 +362,7 @@ API 서버 실행 후 Swagger UI에서 API 명세를 확인할 수 있습니다:
 
 #### 상품 추천 (User → Product)
 
-사용자 ID를 입력받아 추천 상품 목록을 반환합니다. 유저 벡터가 존재하지 않을 경우, Cold Start 에서 상품을 추천합니다.
+사용자 ID를 입력받아 추천 상품 목록을 반환합니다.
 
 ```bash
 GET /recommend/product/{uid}
@@ -386,7 +404,7 @@ curl http://localhost:8081/recommend/product/12345
 
 #### 타겟 유저 추천 (Product → User)
 
-상품 ID를 입력받아 해당 상품에 관심을 가질 만한 유저 목록을 반환합니다. 상품 벡터가 존재하지 않을 경우, Cold Start 에서 유저를 추천합니다. (유저 Cold Start 미구현)
+상품 ID를 입력받아 해당 상품에 관심을 가질 만한 유저 목록을 반환합니다.
 
 ```bash
 GET /recommend/user/{pid}
