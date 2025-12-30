@@ -1,4 +1,6 @@
 import numpy as np
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from fastapi import Depends, HTTPException
 from typing import List, Dict, Any, Optional
@@ -67,7 +69,7 @@ class RecommendationService:
     # ---------------------------------------------------------
     # Fetch Vector
     # ---------------------------------------------------------
-    def _fetch_vector(self, doc_type: str, id_value: str, model_version: str = None) -> List[float]:
+    def _fetch_vector(self, doc_type: str, id_value: str, model_version: str = None) -> List[float] | None:
         """
         Fetch the vector for a given document ID from the Child Vector Schema.
 
@@ -144,11 +146,11 @@ class RecommendationService:
         raise HTTPException(status_code=404, detail=f"Document '{id_value}' not found in {metadata_schema} schema")
 
     # ---------------------------------------------------------
-    # Cache User Session Recommendations
+    # Get Recent Interactions
     # ---------------------------------------------------------
     def _get_recent_interactions(self, doc_type: str, id_value: str) -> List[str]:
         """
-        Get the recent interactions for a given user ID from Redis session.
+        Get the recent interactions for a given document ID from Redis session.
 
         Args:
             doc_type (str): The type of the document ("user" or "product").
@@ -213,7 +215,7 @@ class RecommendationService:
         Args:
             base_vector (List[float]): The base vector.
             interaction_type (str): The type of interaction ("user" or "product").
-            recent_interactions (List[str]): The recent interactions.
+            recent_interactions (List[str]): The recent interactions (event_ts:id_value).
             model_version (str): The model version. Defaults to the latest model version.
 
         Returns:
@@ -222,32 +224,59 @@ class RecommendationService:
         if not recent_interactions:
             return base_vector
 
+        # 1. Parse the recent interactions into a list of dictionaries
+        interactions = []
+        for item in recent_interactions:
+            parts = item.split(":")
+            event_ts, id_value = float(parts[0]), parts[1]
+            interactions.append({"event_ts": event_ts, "id_value": id_value})
+
+        # 2. Query the Vespa for the embedding vectors of the recent interactions
         target_schema = f"{interaction_type}_vector"
         id_field = "uid" if interaction_type == "user" else "pid"
         model_version = model_version if model_version else self.settings.latest_model_version
-        ids_string = ", ".join([f"'{interaction_id}'" for interaction_id in recent_interactions])
+        ids_string = ", ".join([f"'{interaction['id_value']}'" for interaction in interactions])
 
-        yql = f"select embedding from {target_schema} where {id_field} in ({ids_string}) and model_version contains '{model_version}'"
+        yql = f"select embedding, {id_field} from {target_schema} where {id_field} in ({ids_string}) and model_version contains '{model_version}'"
 
-        raw_hits = self._query_vespa(yql=yql, hits=len(recent_interactions))
+        raw_hits = self._query_vespa(yql=yql, hits=len(interactions))
 
-        vectors = [hit["fields"]["embedding"]["values"] for hit in raw_hits if hit["fields"]["embedding"]]
+        vector_map = {hit["fields"][id_field]: hit["fields"]["embedding"]["values"] for hit in raw_hits}
 
-        if not vectors:
+        if not vector_map:
             return base_vector
+
+        # 3. Compute the weighted vectors and the total weight
+        now = datetime(2025, 11, 15, 14, 0, 0, tzinfo=ZoneInfo("Asia/Seoul")).timestamp()
+
+        HALF_LIFE = 1 * 60 * 60 # 1 hour
+        decay_lambda = np.log(2) / HALF_LIFE
+
+        weighted_vectors = []
+        total_weight = 0
+
+        for interaction in interactions:
+            if interaction["id_value"] not in vector_map:
+                continue
+
+            delta_t = max(0, now - interaction["event_ts"])
+            weight = np.exp(-decay_lambda * delta_t)
+
+            weighted_vectors.append(np.array(vector_map[interaction["id_value"]]) * weight)
+            total_weight += weight
 
         def normalize_vector(vector: List[float]) -> List[float]:
             norm = np.linalg.norm(vector)
             return vector / norm if norm > 0 else vector
 
-        recent_vector = np.mean(vectors, axis=0)
-        recent_vector = normalize_vector(recent_vector)
+        # 4. Compute the weighted average vector of the recent interactions
+        recent_vector = normalize_vector(np.sum(weighted_vectors, axis=0) / total_weight)
 
+        # 5. Combine the base vector and the weighted average vector
         alpha = self.settings.recommend_alpha
         beta = self.settings.recommend_beta
 
-        combined_vector = (alpha * np.array(base_vector)) + (beta * recent_vector)
-        combined_vector = normalize_vector(combined_vector)
+        combined_vector = normalize_vector((alpha * np.array(base_vector)) + (beta * recent_vector))
 
         return combined_vector.tolist()
 
@@ -274,7 +303,6 @@ class RecommendationService:
         """
         base_vector = self._fetch_vector(doc_type="user", id_value=uid)
         recent_interactions = self._get_recent_interactions(doc_type="user", id_value=uid)
-        print(recent_interactions)
 
         if not base_vector:
             # Cold Start : Fetch the segment vector for the user.
